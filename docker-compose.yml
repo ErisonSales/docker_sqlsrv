@@ -1,0 +1,52 @@
+version: '3.7'
+services:
+  # -----------------------------------------------
+  app:
+    build:
+      context: ./config
+      dockerfile: Dockerfile
+    image: ${PROJECT_NAME}
+    container_name: ${PROJECT_NAME}-app
+    restart: unless-stopped
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - './app/${APP_DIRECTORY}/:/var/www/'
+    networks:
+      - app
+    depends_on:
+      - nginx
+      - redis
+  # -----------------------------------------------
+  nginx:
+    image: 'nginx:1.19.7-alpine'
+    container_name: ${PROJECT_NAME}-nginx
+    restart: unless-stopped
+    volumes:
+      - './app/${APP_DIRECTORY}/:/var/www:delegated'
+      - './nginx:/etc/nginx/conf.d'
+    ports:
+      - '${APP_PORT}:80'
+    networks:
+      - app
+  # -----------------------------------------------
+  redis:
+    image: 'redis'
+    container_name: ${PROJECT_NAME}-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    networks:
+      - app
+  # -----------------------------------------------
+networks:
+  app:
+    driver: bridge
+# -----------------------------------------------
+volumes:
+  app-nginx:
+    driver: local
+  app-app:
+    driver: local
+  app-redis:
+    driver: local
